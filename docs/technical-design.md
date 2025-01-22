@@ -71,8 +71,8 @@ Degenbox introduces a bundled approach to meme token trading through its "Box" s
 1. **Initial Box Price**
    - Calculated based on predetermined token quantities
    - Example Box 1 composition:
-     - 1,000,000 GIGA
-     - 10,000,000 BRETT
+     - 1,000,000 SPX
+     - 10,000,000 POPCAT
      - 500,000 TRUMP
    - Price = Σ(Token Quantity × Current Market Price)
 
