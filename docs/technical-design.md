@@ -11,7 +11,61 @@ Degenbox introduces a bundled approach to meme token trading through its "Box" s
 - Manage their position through ERC1155 token
 - Exit their position seamlessly across all included chains
 
+## System Architecture
+
+### Technical Design
+![Techinal Design](./img/degenbox-technical-design.jpg)
+
+### Core Components
+
+1. **Box Definition**
+   - Structure containing:
+     - Box unique ID (bytes32)
+     - Box price in USDC
+     - ERC1155 token ID
+     - Token list with chain specifications
+     - Example format:
+       ```
+       Box {
+           id: bytes32
+           price: uint256
+           tokenId: uint256
+           tokens: [{
+               symbol: string
+               chain: string
+               address: address
+           }]
+       }
+       ```
+
+2. **Smart Contracts**
+   
+   a. **Router Contract**
+   - Entry point for user interactions
+   - Handles token swaps to/from USDC
+   - Handles ERC1155 minting/burning
+   - Interfaces with Vault Contract
+   - Key functions:
+     - `buyBox(boxId)`
+     - `sellBox(boxId)`
+
+   b. **Vault Contract**
+   - Manages token custody
+   - Locks/unlocks tokens
+   - Key functions:
+     - `lock(boxId, amount)`
+     - `unlock(boxId, amount)`
+
+3. **Degenbox's Relayer Service (DRS)**
+   - Cross-chain orchestration system
+   - Monitors events across all supported chains
+   - Executes cross-chain token swaps
+   - Manages vault synchronization
+
 ## Box Price Mechanics
+
+### Box Example
+![Box Example](./img/degenbox-box-example.jpg)
 
 ### Price Calculation
 1. **Initial Box Price**
@@ -65,55 +119,7 @@ The Degenbox system relies on liquidity providers (LPs) across different chains 
 3. **LP Incentives**
    - Base swap fee: 0.3% of transaction volume
    - Fee distribution: 80% to LPs, 20% to protocol
-   - Additional incentives during initial liquidity bootstrap period
 
-## System Architecture
-
-### Core Components
-
-1. **Box Definition**
-   - Structure containing:
-     - Box unique ID (bytes32)
-     - Box price in USDC
-     - ERC1155 token ID
-     - Token list with chain specifications
-     - Example format:
-       ```
-       Box {
-           id: bytes32
-           price: uint256
-           tokenId: uint256
-           tokens: [{
-               symbol: string
-               chain: string
-               address: address
-           }]
-       }
-       ```
-
-2. **Smart Contracts**
-   
-   a. **Router Contract**
-   - Entry point for user interactions
-   - Handles token swaps to/from USDC
-   - Handles ERC1155 minting/burning
-   - Interfaces with Vault Contract
-   - Key functions:
-     - `buyBox(boxId)`
-     - `sellBox(boxId)`
-
-   b. **Vault Contract**
-   - Manages token custody
-   - Locks/unlocks tokens
-   - Key functions:
-     - `lock(boxId, amount)`
-     - `unlock(boxId, amount)`
-
-3. **Degenbox's Relayer Service (DRS)**
-   - Cross-chain orchestration system
-   - Monitors events across all supported chains
-   - Executes cross-chain token swaps
-   - Manages vault synchronization
 
 ## Transaction Flows
 
