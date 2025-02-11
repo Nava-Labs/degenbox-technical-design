@@ -50,7 +50,7 @@ Degenbox introduces a bundled approach to meme token trading through its "Box" s
        - `buyBox(boxId)`
        - `sellBox(boxId)`
      - **Destination chain:**
-       - `swap()`, can only be accessed by DRS
+       - `swap(..)`, can only be accessed by DRS
        - `addLiquidity(amount)`
        - `removeLiquidity(amount)`
        - `requestToRemoveLiquidity(amount)`
@@ -62,7 +62,7 @@ Degenbox introduces a bundled approach to meme token trading through its "Box" s
    - Key functions:
      - `lock(boxId, _data)`
      - `unlock(boxId, _data)`
-     - `swap(...)`
+     - `swap(..)`
      - `addLiquditiy(amount)`
      - `removeLiquidity(amount)`
 
@@ -88,7 +88,7 @@ Degenbox introduces a bundled approach to meme token trading through its "Box" s
    - Calculated based on predetermined token quantities
    - Example Box 1 composition:
      - 1,000,000 $SPX6900
-     - 10,000,000 %POPCAT
+     - 10,000,000 $POPCAT
      - 500,000 $TRUMP
    - Price = Σ(Token Quantity × Current Market Price)
 
