@@ -42,25 +42,41 @@ Degenbox introduces a bundled approach to meme token trading through its "Box" s
    
    a. **Router Contract**
    - Entry point for user interactions
-   - Handles token swaps to/from USDC
+   - Trigger DRS (Degenbox's Relayer Service) to execute cross chain swaps
    - Handles ERC1155 minting/burning
    - Interfaces with Vault Contract
    - Key functions:
-     - `buyBox(boxId)`
-     - `sellBox(boxId)`
-
-   b. **Vault Contract**
+     - **Source chain:**
+       - `buyBox(boxId)`
+       - `sellBox(boxId)`
+     - **Destination chain:**
+       - `swap()`, can only be accessed by DRS
+       - `addLiquidity(amount)`
+       - `removeLiquidity(amount)`
+       - `requestToRemoveLiquidity(amount)`
+       - `claimLiquidity()`
+      
+   b. **Vault Contract** (can only be accessible through Router's contract)
    - Manages token custody
-   - Locks/unlocks tokens
+   - Locks/unlocks tokens 
    - Key functions:
-     - `lock(boxId, amount)`
-     - `unlock(boxId, amount)`
+     - `lock(boxId, _data)`
+     - `unlock(boxId, _data)`
+     - `swap(...)`
+     - `addLiquditiy(amount)`
+     - `removeLiquidity(amount)`
 
-3. **Degenbox's Relayer Service (DRS)**
-   - Cross-chain orchestration system
-   - Monitors events across all supported chains
-   - Executes cross-chain token swaps
-   - Manages vault synchronization
+3. **Degenbox's Relayer Service (DRS)**  
+   - Cross-chain orchestration system  
+   - Monitors events across all supported chains  
+   - Manages vault synchronization  
+   - Executes optimized cross-chain token swaps with:  
+     - Slippage managed based on the price at the time of initiation  
+     - Optimal routing across multiple chains
+     - Dynamic fee calculation, including:  
+       - Network fees across chains  
+       - Liquidity provider (LP) fees  
+       - Protocol fees  
 
 ## Box Price Mechanics
 
@@ -71,9 +87,9 @@ Degenbox introduces a bundled approach to meme token trading through its "Box" s
 1. **Initial Box Price**
    - Calculated based on predetermined token quantities
    - Example Box 1 composition:
-     - 1,000,000 SPX
-     - 10,000,000 POPCAT
-     - 500,000 TRUMP
+     - 1,000,000 $SPX6900
+     - 10,000,000 %POPCAT
+     - 500,000 $TRUMP
    - Price = Σ(Token Quantity × Current Market Price)
 
 2. **Price Updates**
@@ -85,9 +101,8 @@ Degenbox introduces a bundled approach to meme token trading through its "Box" s
 
 ### Fee Structure
 1. **Network Fees**
-- Gas fees on source chain
-- Cross-chain execution fees
-- Destination chain swap fees
+- Gas fees on across involved chains
+- Swap fees on across involved chains
 
 2. **Protocol Fees**
 - 0.3% swap fee on each token
@@ -97,7 +112,6 @@ Degenbox introduces a bundled approach to meme token trading through its "Box" s
 
 3. **Price Impact**
 - Large purchases may experience price impact
-- Slippage protection ensures fair execution
 - Maximum trade size limits to protect LP pools
 
 ## Liquidity Provider (LP) System
@@ -112,7 +126,7 @@ The Degenbox system relies on liquidity providers (LPs) across different chains 
    - Each chain maintains its independent LP pool
 
 2. **Fee Distribution**
-   - Swap fees are collected from every buy/sell operation
+   - Swap fees are collected from every buy/sell operation that occurred on that chain
    - Fees are distributed proportionally to LPs based on their share
    - Fee collection occurs in real-time as swaps are executed
 
@@ -120,50 +134,64 @@ The Degenbox system relies on liquidity providers (LPs) across different chains 
    - Base swap fee: 0.3% of transaction volume
    - Fee distribution: 80% to LPs, 20% to protocol
 
-
 ## Transaction Flows
 
 ### Buy Flow
 1. User initiates transaction with Router Contract on source chain
    - Can pay with any token that can be swapped to USDC
-   - Router performs swap to USDC if necessary
-   - USDC is locked in Vault Contract
-   - User receives ERC1155 token representing box ownership
-
+   - Router locks USDC into vault (will be act as liquidity)
+   
 2. DRS detects buy event
    - Monitors Router Contract events
-   - Triggers parallel execution across destination chains
+   - Triggers parallel execution on source and destination chains
    - Performs token swaps on each chain per box specification with fee procedure
+      - Uses liquidity from Users or LP pools to facilitate swaps efficiently
    - Locks acquired tokens in respective Vault Contracts
+   - User receives ERC1155 token representing box ownership
 
 ### Sell Flow
 1. User initiates sell with Router Contract on source chain
-   - Sends ERC1155 token back to Router
+   - Burns the ERC1155 token through Router
 
 2. DRS detects sell event
    - Monitors Router Contract events
    - Triggers parallel execution across destination chains
    - Executes token swaps back to USDC on respective chains with fee procedure
-   - Triggers release of originally locked USDC to user
+   - Triggers release of originally locked USDC to user on source chain
+
+### Adding Liquidity Flow
+1. User provides liquidity in USDC via Router Contract on the destination chain 
+2. Vault Contract locks the USDC and issues LP tokens representing the user’s share
+3. LPs earn a portion of swap fees generated on that chain
+
+### Remove Liquidity Flow
+1. User requests to remove liquidity via the Router Contract
+2. If the requested amount is available in the Vault Contract:
+   - User burns LP tokens
+   - Receives the withdrawn USDC plus accrued fees
+
+### Request To Remove Liquidity Flow
+1. User requests liquidity removal via the Router Contract
+2. If the requested amount is not available in the Vault Contract:
+   - Protocol initiates a bridge process to transfer USDC from the source chain to the requested chain
+   - Once liquidity is available, the user can proceed with through `claimLiquidity(..)` to get the liquidity back
 
 ## Security Considerations
 
 1. **Vault Security**
-   - RBAC(Role-based Account control) functionality
    - Emergency pause functionality
 
 2. **Relayer Security**
-   - Fallback mechanisms for failed transactions
+   - Fallback mechanisms for failed transactions on involved chains
 
 3. **Price Impact Protection**
-   - Maximum slippage parameters
    - Reliable in extreme market conditions
    - Volume-based execution limits?
 
 ## Implementation Requirements
 
 1. **Relayer System**
-   - High-availability architecture
+   - High-availability architecture (RPC, Relayer,)
    - Real-time monitoring
    - Automatic failover capabilities
    - Transaction receipt verification
